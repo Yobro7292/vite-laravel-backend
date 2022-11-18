@@ -58,7 +58,10 @@ class AuthController extends Controller
                 'message' => 'Email sent successfully'
             ], 200);
         } else {
-            return response()->json('User not exists', 400);
+            return response()->json([
+                'success' => false,
+                'message' => 'User does not exists'
+            ], 400);
         }
 
     }
@@ -111,7 +114,10 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return response()->json([
+                'success' => false,
+                $validator->errors()
+            ], 400);
         }
 
         if ($request->all()['newPassword'] != $request->all()['confirmNewPassword']) {
@@ -161,10 +167,16 @@ class AuthController extends Controller
             'confirm_password' => 'required'
         ]);
         if ($request->confirm_password != $request->password) {
-            return response()->json('Password should match with Confirm Password field');
+            return response()->json([
+                'message' => 'Password should match with Confirm Password field',
+                'success' => false
+            ], 400);
         }
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return response()->json([
+                'success' => false,
+                $validator->errors()
+            ], 400);
         }
         $input = $request->all();
         $input['password'] = Hash::make($input['password']);
@@ -198,14 +210,60 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::user()->tokens()->delete();
-        return response()->json('Logged Out', 200);
+        return response()->json([
+            'success' => true,
+            'message' => 'Logged Out'
+        ], 200);
     }
 
-    /* ------------- Get User after login ----------- */
-    public function getUsers(Request $request)
+    /* ------------- Change Password Function ----------- */
+    public function changePassword(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required',
+            'new_password' => 'required',
+            'confirm_new_password' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                $validator->errors()
+            ], 400);
+        }
+        if ($request->new_password != $request->confirm_new_password) {
+            return response()->json([
+                'message' => 'Password should match with Confirm Password field',
+                'success' => false
+            ], 400);
+        }
+
         $authUser = Auth::user();
-        $users = DB::select('select * from users');
-        return response()->json($users, 200);
+        $auth = Hash::check($request->current_password, $authUser->password);
+        if ($auth) {
+            $newPassword = Hash::make($request->new_password);
+            $update = DB::update('update users set password = ? where email = ?', [$newPassword, $authUser->email]);
+            if ($update) {
+
+                // for logout
+                Auth::user()->tokens()->delete();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Password updated'
+                ], 200);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Something went wrong while updating password'
+                ], 400);
+            }
+        } else {
+            $success['success'] = false;
+            $success['message'] = 'Invalid current password.';
+            return response()->json($success, 400);
+        }
+
     }
+
 }
