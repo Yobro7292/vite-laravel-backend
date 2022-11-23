@@ -5,7 +5,12 @@
     @component('mail::button', ['url' => $mailData['url']])
         Reset Password
     @endcomponent
-    <a href={{ $mailData['url'] }}> {{ $mailData['url'] }} </a>
+    <p>
+        <a href={{ $mailData['url'] }}> {{ $mailData['url'] }} </a>
+    </p>
+    <br>
+    <h5>Please note that this url is valid only for five minutes.</h5>
+    <br>
     Thanks,<br>
     {{ config('app.name') }}
 @endcomponent

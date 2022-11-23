@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Validator;
 use Str;
 use App\Models\User;
+use \Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -65,9 +66,35 @@ class AuthController extends Controller
         }
 
     }
+    /* ------------ verify user token ------------- */
+    public function verifyUserToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required'
+        ]);
 
-    /* ------------- Verify Token----------- */
-    public function verifyToken(Request $request)
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $personalAccessToken = PersonalAccessToken::findToken($request->token);
+        // if($personalAccessToken)
+        if($personalAccessToken){
+            $user = $personalAccessToken->tokenable;
+            return response()->json([
+                'success' => true,
+                'message' => 'token verified',
+                'user' => $user
+            ], 200);
+        } else {
+            $success['success'] = false;
+            $success['message'] = 'Invalid token';
+            return response()->json($success, 400);
+        }
+    }
+
+    /* ------------- Verify Email Token----------- */
+    public function verifyEmailToken(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
@@ -84,7 +111,8 @@ class AuthController extends Controller
         ]);
         if ($check->exists()) {
             $difference = Carbon::now()->diffInSeconds($check->first()->created_at);
-            if ($difference > 3600) {
+            //valid only for five minutes
+            if ($difference > 300) {
                 $data['isVerified'] = false;
                 return view('resetPasswordForm.index', $data);
             }
@@ -132,7 +160,7 @@ class AuthController extends Controller
         ]);
         if ($check->exists()) {
             $difference = Carbon::now()->diffInSeconds($check->first()->created_at);
-            if ($difference > 3600) {
+            if ($difference > 300) {
                 $data['isVerified'] = false;
                 return view('resetPasswordForm.index', $data);
             }

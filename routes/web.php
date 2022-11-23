@@ -8,5 +8,5 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 */
-Route::get('/reset-password', [AuthController::class, 'verifyToken']);
+Route::get('/reset-password', [AuthController::class, 'verifyEmailToken']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);

@@ -16,9 +16,10 @@ use App\Http\Controllers\AuthController;
 |
 */
 Route::post('/forget-password', [AuthController::class, 'forgetPassword']);
-Route::get('/reset-password', [AuthController::class, 'verifyToken']);
+Route::get('/reset-password', [AuthController::class, 'verifyEmailToken']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/verify-user-token', [AuthController::class, 'verifyUserToken']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::controller(userController::class)->group(
