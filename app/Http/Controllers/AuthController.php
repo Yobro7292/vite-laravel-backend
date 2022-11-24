@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
@@ -64,7 +65,6 @@ class AuthController extends Controller
                 'message' => 'User does not exists'
             ], 400);
         }
-
     }
     /* ------------ verify user token ------------- */
     public function verifyUserToken(Request $request)
@@ -79,7 +79,7 @@ class AuthController extends Controller
 
         $personalAccessToken = PersonalAccessToken::findToken($request->token);
         // if($personalAccessToken)
-        if($personalAccessToken){
+        if ($personalAccessToken) {
             $user = $personalAccessToken->tokenable;
             return response()->json([
                 'success' => true,
@@ -128,7 +128,6 @@ class AuthController extends Controller
             $data['isVerified'] = false;
             return view('resetPasswordForm.index', $data);
         }
-
     }
 
     /* ------------- Update Password Function ----------- */
@@ -209,11 +208,21 @@ class AuthController extends Controller
         $input = $request->all();
         $input['password'] = Hash::make($input['password']);
         unset($input['confirm_password']);
-        $user = User::create($input);
-        $success['token'] = $user->createToken('MyAuthApp')->plainTextToken;
-        $success['message'] = 'User ' . $user['name'] . ' created successfully';
-        $success['success'] = true;
-        return response()->json($success, 200);
+
+        $found = User::where('email', $input['email'])->count();
+        if ($found == 0) {
+            $user = User::create($input);
+            $success['token'] = $user->createToken('MyAuthApp')->plainTextToken;
+            $success['message'] = 'User ' . $user['name'] . ' created successfully';
+            $success['success'] = true;
+            $success['user'] = $user;
+            return response()->json($success, 200);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'User already registered'
+            ], 400);
+        }
     }
 
     /* ------------- Login Function ----------- */
@@ -291,7 +300,5 @@ class AuthController extends Controller
             $success['message'] = 'Invalid current password.';
             return response()->json($success, 400);
         }
-
     }
-
 }
