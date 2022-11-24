@@ -15,12 +15,13 @@ use App\Http\Controllers\AuthController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
 Route::post('/forget-password', [AuthController::class, 'forgetPassword']);
-Route::get('/reset-password', [AuthController::class, 'verifyEmailToken']);
+Route::post('/verify-email-token', [AuthController::class, 'verifyEmailToken']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify-user-token', [AuthController::class, 'verifyUserToken']);
-
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::controller(userController::class)->group(
         function () {

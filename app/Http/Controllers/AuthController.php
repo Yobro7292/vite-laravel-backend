@@ -39,9 +39,8 @@ class AuthController extends Controller
 
             $token = Str::random(64);
             $email = $request->email;
-            $host = $request->getSchemeAndHttpHost();
+            $host = request()->headers->get("origin");
             $url = $host . '/reset-password?token=' . $token . '&email=' . $email;
-
             $password_reset = DB::table('password_resets')->insert([
                 'email' => $email,
                 'token' => $token,
@@ -104,7 +103,6 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
-        $data = [];
         $check = DB::table('password_resets')->where([
             ['email', $request->all()['email']],
             ['token', $request->all()['token']],
@@ -113,20 +111,21 @@ class AuthController extends Controller
             $difference = Carbon::now()->diffInSeconds($check->first()->created_at);
             //valid only for five minutes
             if ($difference > 300) {
-                $data['isVerified'] = false;
-                return view('resetPasswordForm.index', $data);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token Expired'
+                ], 400);
+            } else {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Token Verified'
+                ], 200);
             }
-
-            $data['token'] = $request->all()['token'];
-            $data['email'] = $request->all()['email'];
-            $data['isVerified'] = true;
-            $data['url'] = '/reset-password';
-            $data['isPasswordSet'] = false;
-            return view('resetPasswordForm.index', $data);
         } else {
-            $data = [];
-            $data['isVerified'] = false;
-            return view('resetPasswordForm.index', $data);
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Token'
+            ], 400);
         }
     }
 
@@ -148,11 +147,11 @@ class AuthController extends Controller
         }
 
         if ($request->all()['newPassword'] != $request->all()['confirmNewPassword']) {
-            $data['isVerified'] = false;
-            return view('resetPasswordForm.index', $data);
+            return response()->json([
+                'success' => false,
+                'message' => 'Password should match with Confirm Password field'
+            ], 400);
         }
-        $data = [];
-
         $check = DB::table('password_resets')->where([
             ['email', $request->all()['email']],
             ['token', $request->all()['token']],
@@ -160,27 +159,27 @@ class AuthController extends Controller
         if ($check->exists()) {
             $difference = Carbon::now()->diffInSeconds($check->first()->created_at);
             if ($difference > 300) {
-                $data['isVerified'] = false;
-                return view('resetPasswordForm.index', $data);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token Expired'
+                ], 400);
             }
-
             $password = Hash::make($request->all()['newPassword']);
-
-
             DB::update('update users set password = ? where email = ?', [$password, $request->all()['email']]);
 
-            $delete = DB::table('password_resets')->where([
+            DB::table('password_resets')->where([
                 ['email', $request->all()['email']],
                 ['token', $request->all()['token']],
             ])->delete();
-
-            $data['isPasswordSet'] = true;
-            $data['isVerified'] = true;
-            return view('resetPasswordForm.index', $data);
+            return response()->json([
+                'success' => true,
+                'message' => 'Password changed'
+            ], 200);
         } else {
-            $data = [];
-            $data['isVerified'] = false;
-            return view('resetPasswordForm.index', $data);
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid Token'
+            ], 400);
         }
     }
 
