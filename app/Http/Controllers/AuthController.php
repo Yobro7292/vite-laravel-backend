@@ -232,6 +232,7 @@ class AuthController extends Controller
             $authUser = Auth::user();
             $success['user'] = $authUser;
             $success['success'] = true;
+            Auth::user()->tokens()->delete();
             $success['token'] = $authUser->createToken('MyAuthApp')->plainTextToken;
             $success['message'] = 'Login success';
             return response()->json($success, 200);

@@ -4,6 +4,7 @@ use App\Http\Controllers\userController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\NaikanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +32,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::delete('/remove-user', 'removeUser');
         }
     );
+    Route::resource('naikans', NaikanController::class);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
